@@ -1,0 +1,571 @@
+[
+  {
+    "@seccl/mongo-connections": [],
+    "@seccl/serverless-utils": [],
+    "@seccl/test-utils": []
+  },
+  {
+    "@seccl/id-generator": [
+      "@seccl/mongo-connections"
+    ],
+    "@seccl/cucumber-test": [
+      "@seccl/mongo-connections"
+    ],
+    "@seccl/queue": [
+      "@seccl/mongo-connections"
+    ]
+  },
+  {
+    "@seccl/database-connection": [
+      "@seccl/mongo-connections",
+      "@seccl/id-generator"
+    ]
+  },
+  {
+    "@seccl/investment-resource": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/transaction-resource": [
+      "@seccl/database-connection",
+      "@seccl/test-utils"
+    ],
+    "@seccl/party-data-resource": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/interface-resource": [
+      "@seccl/database-connection",
+      "@seccl/queue"
+    ],
+    "@seccl/feature-flag-utils": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/report-resource": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/illustration-resource": [
+      "@seccl/database-connection",
+      "@seccl/test-utils"
+    ],
+    "@seccl/portfolio-resource": [
+      "@seccl/database-connection",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/product-data-resource": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/notifications": [
+      "@seccl/database-connection",
+      "@seccl/queue"
+    ],
+    "@seccl/application-data": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/event-resource": [
+      "@seccl/database-connection"
+    ],
+    "@seccl/market-data-resource": [
+      "@seccl/database-connection"
+    ]
+  },
+  {
+    "@seccl/aws-utils": [
+      "@seccl/database-connection",
+      "@seccl/notifications"
+    ],
+    "@seccl/client-data-resource": [
+      "@seccl/database-connection",
+      "@seccl/feature-flag-utils"
+    ],
+    "@seccl/assets-resource": [
+      "@seccl/database-connection",
+      "@seccl/market-data-resource"
+    ],
+    "@seccl/transaction-analysis-manager": [
+      "@seccl/transaction-resource",
+      "@seccl/event-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/analytics-engine": [
+      "@seccl/feature-flag-utils",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource"
+    ],
+    "@seccl/rules-engine": [
+      "@seccl/notifications",
+      "@seccl/test-utils"
+    ]
+  },
+  {
+    "@seccl/security": [
+      "@seccl/mongo-connections",
+      "@seccl/aws-utils",
+      "@seccl/feature-flag-utils",
+      "@seccl/id-generator",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/firm-data-resource": [
+      "@seccl/database-connection",
+      "@seccl/aws-utils",
+      "@seccl/feature-flag-utils"
+    ],
+    "@seccl/communications-data-resource": [
+      "@seccl/database-connection",
+      "@seccl/aws-utils",
+      "@seccl/application-data"
+    ],
+    "@seccl/test-utils-root": [
+      "@seccl/aws-utils"
+    ],
+    "@seccl/backend-api": [
+      "@seccl/aws-utils",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/mongo-analyser": [
+      "@seccl/aws-utils",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/identity-resource": [
+      "@seccl/aws-utils"
+    ],
+    "@seccl/scheduler": [
+      "@seccl/aws-utils",
+      "@seccl/notifications",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/static-data": [
+      "@seccl/aws-utils",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/calculation-engine": [
+      "@seccl/product-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource"
+    ]
+  },
+  {
+    "@seccl/custody-resource": [
+      "@seccl/database-connection",
+      "@seccl/firm-data-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/data-analysis-manager": [
+      "@seccl/investment-resource",
+      "@seccl/transaction-resource",
+      "@seccl/interface-resource",
+      "@seccl/client-data-resource",
+      "@seccl/analytics-engine",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/notifications",
+      "@seccl/event-resource",
+      "@seccl/firm-data-resource",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/settlement-engine": [
+      "@seccl/transaction-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/firm-data-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/pfolio-validation-engine": [
+      "@seccl/party-data-resource",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/event-resource",
+      "@seccl/firm-data-resource",
+      "@seccl/security",
+      "@seccl/test-utils"
+    ],
+    "@seccl/portfolio-analysis-manager": [
+      "@seccl/aws-utils",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/analytics-engine",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/calculation-engine",
+      "@seccl/firm-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils",
+      "@seccl/test-utils"
+    ],
+    "@seccl/firm-data-manager": [
+      "@seccl/feature-flag-utils",
+      "@seccl/firm-data-resource",
+      "@seccl/id-generator",
+      "@seccl/security",
+      "@seccl/queue"
+    ],
+    "@seccl/rest-api": [
+      "@seccl/feature-flag-utils",
+      "@seccl/application-data",
+      "@seccl/security"
+    ],
+    "@seccl/pdf-processor": [
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ]
+  },
+  {
+    "@seccl/communications-manager": [
+      "@seccl/database-connection",
+      "@seccl/pfolio-validation-engine",
+      "@seccl/aws-utils",
+      "@seccl/client-data-resource",
+      "@seccl/analytics-engine",
+      "@seccl/illustration-resource",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/notifications",
+      "@seccl/application-data",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/communications-data-resource",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/batch-manager": [
+      "@seccl/investment-resource",
+      "@seccl/transaction-resource",
+      "@seccl/custody-resource",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/product-data-resource",
+      "@seccl/event-resource",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/communications-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/message-mapping-engine": [
+      "@seccl/transaction-resource",
+      "@seccl/party-data-resource",
+      "@seccl/interface-resource",
+      "@seccl/custody-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/id-generator",
+      "@seccl/security",
+      "@seccl/test-utils"
+    ],
+    "@seccl/validation-engine": [
+      "@seccl/transaction-resource",
+      "@seccl/party-data-resource",
+      "@seccl/custody-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/report-resource",
+      "@seccl/calculation-engine",
+      "@seccl/rules-engine",
+      "@seccl/application-data",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/product-data-manager": [
+      "@seccl/pfolio-validation-engine",
+      "@seccl/feature-flag-utils",
+      "@seccl/product-data-resource",
+      "@seccl/application-data",
+      "@seccl/firm-data-resource",
+      "@seccl/queue"
+    ],
+    "@seccl/illustration-manager": [
+      "@seccl/pfolio-validation-engine",
+      "@seccl/aws-utils",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/analytics-engine",
+      "@seccl/illustration-resource",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/calculation-engine",
+      "@seccl/firm-data-resource",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/lloyds-webhook-api": [
+      "@seccl/aws-utils",
+      "@seccl/rest-api",
+      "@seccl/queue"
+    ],
+    "test-utils-api": [
+      "@seccl/aws-utils",
+      "@seccl/rest-api",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ]
+  },
+  {
+    "@seccl/batch-event-processor": [
+      "@seccl/database-connection",
+      "@seccl/batch-manager",
+      "@seccl/aws-utils",
+      "@seccl/product-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/report-manager": [
+      "@seccl/database-connection",
+      "@seccl/transaction-resource",
+      "@seccl/validation-engine",
+      "@seccl/custody-resource",
+      "@seccl/aws-utils",
+      "@seccl/report-resource",
+      "@seccl/portfolio-resource",
+      "@seccl/calculation-engine",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/id-generator",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/interface-manager": [
+      "@seccl/investment-resource",
+      "@seccl/transaction-resource",
+      "@seccl/message-mapping-engine",
+      "@seccl/validation-engine",
+      "@seccl/party-data-resource",
+      "@seccl/interface-resource",
+      "@seccl/aws-utils",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/notifications",
+      "@seccl/application-data",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/investment-workflow-manager": [
+      "@seccl/investment-resource",
+      "@seccl/validation-engine",
+      "@seccl/calculation-engine",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils",
+      "@seccl/test-utils"
+    ],
+    "@seccl/assets-manager": [
+      "@seccl/transaction-resource",
+      "@seccl/validation-engine",
+      "@seccl/aws-utils",
+      "@seccl/feature-flag-utils",
+      "@seccl/report-resource",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/event-workflow-manager": [
+      "@seccl/transaction-resource",
+      "@seccl/validation-engine",
+      "@seccl/custody-resource",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/analytics-engine",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/calculation-engine",
+      "@seccl/application-data",
+      "@seccl/event-resource",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/communications-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils",
+      "@seccl/test-utils"
+    ],
+    "@seccl/custody-workflow-manager": [
+      "@seccl/transaction-resource",
+      "@seccl/validation-engine",
+      "@seccl/custody-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/security",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ],
+    "@seccl/transaction-workflow-manager": [
+      "@seccl/transaction-resource",
+      "@seccl/settlement-engine",
+      "@seccl/message-mapping-engine",
+      "@seccl/validation-engine",
+      "@seccl/interface-resource",
+      "@seccl/custody-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/calculation-engine",
+      "@seccl/notifications",
+      "@seccl/event-resource",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/portfolio-workflow-manager": [
+      "@seccl/message-mapping-engine",
+      "@seccl/party-data-resource",
+      "@seccl/aws-utils",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/analytics-engine",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/calculation-engine",
+      "@seccl/application-data",
+      "@seccl/firm-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils",
+      "@seccl/test-utils"
+    ],
+    "@seccl/party-data-manager": [
+      "@seccl/validation-engine",
+      "@seccl/party-data-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/custody-analysis-manager": [
+      "@seccl/validation-engine",
+      "@seccl/custody-resource",
+      "@seccl/portfolio-resource",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/test-utils"
+    ],
+    "@seccl/market-data-manager": [
+      "@seccl/validation-engine",
+      "@seccl/aws-utils",
+      "@seccl/event-resource",
+      "@seccl/firm-data-resource",
+      "@seccl/market-data-resource",
+      "@seccl/assets-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils",
+      "@seccl/test-utils"
+    ]
+  },
+  {
+    "@seccl/fix-inbound-processor": [
+      "@seccl/database-connection",
+      "@seccl/interface-manager",
+      "@seccl/aws-utils",
+      "@seccl/notifications",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/core-processor": [
+      "@seccl/database-connection",
+      "@seccl/interface-manager",
+      "@seccl/validation-engine",
+      "@seccl/event-workflow-manager",
+      "@seccl/aws-utils",
+      "@seccl/notifications",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/fix-outbound-processor": [
+      "@seccl/database-connection",
+      "@seccl/interface-manager",
+      "@seccl/notifications",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/pfolio-api": [
+      "@seccl/data-analysis-manager",
+      "@seccl/interface-manager",
+      "@seccl/batch-manager",
+      "@seccl/party-data-manager",
+      "@seccl/event-workflow-manager",
+      "@seccl/aws-utils",
+      "@seccl/feature-flag-utils",
+      "@seccl/rest-api",
+      "@seccl/notifications",
+      "@seccl/security",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/core-api": [
+      "@seccl/data-analysis-manager",
+      "@seccl/interface-manager",
+      "@seccl/batch-manager",
+      "@seccl/party-data-manager",
+      "@seccl/event-workflow-manager",
+      "@seccl/aws-utils",
+      "@seccl/feature-flag-utils",
+      "@seccl/rest-api",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/security"
+    ],
+    "@seccl/interface-inbound-processor": [
+      "@seccl/interface-manager",
+      "@seccl/aws-utils",
+      "@seccl/notifications",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/interface-outbound-processor": [
+      "@seccl/interface-manager",
+      "@seccl/aws-utils",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/interface-api": [
+      "@seccl/interface-manager",
+      "@seccl/aws-utils",
+      "@seccl/rest-api",
+      "@seccl/notifications",
+      "@seccl/firm-data-resource",
+      "@seccl/queue",
+      "@seccl/serverless-utils"
+    ],
+    "@seccl/pfolio-processor": [
+      "@seccl/event-workflow-manager",
+      "@seccl/aws-utils",
+      "@seccl/notifications",
+      "@seccl/queue"
+    ],
+    "@seccl/client-data-manager": [
+      "@seccl/event-workflow-manager",
+      "@seccl/party-data-resource",
+      "@seccl/pfolio-validation-engine",
+      "@seccl/interface-resource",
+      "@seccl/aws-utils",
+      "@seccl/client-data-resource",
+      "@seccl/feature-flag-utils",
+      "@seccl/analytics-engine",
+      "@seccl/illustration-resource",
+      "@seccl/portfolio-resource",
+      "@seccl/product-data-resource",
+      "@seccl/calculation-engine",
+      "@seccl/notifications",
+      "@seccl/rules-engine",
+      "@seccl/firm-data-resource",
+      "@seccl/security",
+      "@seccl/queue",
+      "@seccl/test-utils"
+    ]
+  }
+]
