@@ -5,9 +5,7 @@ import { Listr } from 'listr2'
 import { KnownPackages, PackageInfo, resolveKnownPackages } from "./known-packages";
 import { exists, execAsync, isRetrying, Tier } from "./utils";
 
-
-
-type Step = "Workspace Install" | "Install" | "Build" | "Deploy" | "Pack";
+type Step = "Workspace Install" | "Install" | "Install Dev" | "Build" | "Deploy" | "Pack";
 
 const readSuccessfulPackages = async (): Promise<{ [pkg: string]: Set<Step>; }> => {
   try {
@@ -51,7 +49,7 @@ const getLocalTarballs = (dependencies: string[], packages: KnownPackages): stri
     if (!dependencyInfo) {
       throw Error(`Dependency ${dependency} not found`);
     }
-    if (dependencyInfo.isService) {
+    if (dependencyInfo.packageType === 'service') {
       throw Error(`Dependency ${dependency} is a service`);
     }
     if (!dependencyInfo.localTarball) {
@@ -79,7 +77,7 @@ const resetPackageSuccess = async (successfulPackages: { [pkg: string]: Set<Step
 };
 
 const resolveServerlessPath = (packages: KnownPackages, packageInfo: PackageInfo): string => {
-  if (!packageInfo.isService) {
+  if (packageInfo.packageType !== 'service') {
     throw new Error("Unable to resolve serverless path; package is not a service");
   }
   if (exists(path.join(packageInfo.packagePath, 'serverless.ts'))) {
@@ -123,7 +121,12 @@ const resolveTargetTiers = (targetServices: string[], tiers: Tier[]): Tier[] => 
   return result;
 };
 
-const main = async (targetServices: string[] = []) => {
+
+
+const main = async (
+  targetServices: string[] = [],
+  externalPackageTargetVersions: { [pkg: string]: string } = {}
+) => {
   const rootDirectory = path.resolve(__dirname, '..');
   const successfulPackages = await readSuccessfulPackages();
 
@@ -172,7 +175,7 @@ const main = async (targetServices: string[] = []) => {
                         return !successfulPackages[pkg] || isRetrying(task);
                       },
                       task: async () => {
-                        await execAsync(`git reset --hard HEAD && git clean -fdX && npm clean-install && rm -f *.tsbuildinfo`, { cwd: packageInfo.packagePath })
+                        await execAsync(`git reset --hard HEAD && git clean -fdX && rm -f *.tsbuildinfo`, { cwd: packageInfo.packagePath })
                         await resetPackageSuccess(successfulPackages, pkg);
                       }
                     },
@@ -200,10 +203,32 @@ const main = async (targetServices: string[] = []) => {
                           await execAsync(`git clean -fdX && npm clean-install`, { cwd: packageInfo.packagePath })
                         }
 
-                        const command = `npm install ${localTarballs.join(' ')}`;
+                        const externalDependencies = Object.keys(packageInfo.packageJson.dependencies ?? {})
+                          .filter((dependency: string) => dependency in externalPackageTargetVersions)
+                          .map((dependency) => `${dependency}@${externalPackageTargetVersions[dependency]}`);
+
+                        const command = `npm install ${[...localTarballs, ...externalDependencies].map((dep) => `"${dep}"`).join(' ')}`;
 
                         await execAsync(command, { cwd: packageInfo.packagePath });
                         await recordSuccessfulPackage(successfulPackages, pkg, 'Install');
+                      },
+                    },
+                    {
+                      title: `Install dev dependencies`,
+                      retry: 1,
+                      task: async (ctx, task) => {
+                        if (successfulPackages[pkg]?.has('Install Dev')) return;
+
+                        const externalDependencies = Object.keys(packageInfo.packageJson.devDependencies ?? {})
+                          .filter((dependency: string) => dependency in externalPackageTargetVersions)
+                          .map((dependency) => `${dependency}@${externalPackageTargetVersions[dependency]}`);
+
+                        if (externalDependencies.length !== 0) {
+                          const command = `npm install -D ${externalDependencies.map((dep) => `"${dep}"`).join(' ')}`;
+                          await execAsync(command, { cwd: packageInfo.packagePath });
+                        }
+
+                        await recordSuccessfulPackage(successfulPackages, pkg, 'Install Dev');
                       },
                     },
                     {
@@ -221,7 +246,7 @@ const main = async (targetServices: string[] = []) => {
                     },
                     {
                       title: `Deploy`,
-                      enabled: () => packageInfo.isService,
+                      enabled: () => packageInfo.packageType === 'service',
                       retry: 1,
                       task: async () => {
                         if (successfulPackages[pkg]?.has('Deploy')) return;
@@ -232,7 +257,7 @@ const main = async (targetServices: string[] = []) => {
                     },
                     {
                       title: `Pack`,
-                      enabled: () => !packageInfo.isService,
+                      enabled: () => packageInfo.packageType === 'library',
                       task: async () => {
                         if (!successfulPackages[pkg]?.has('Pack')) {
                           await execAsync(`npm pack`, { cwd: packageInfo.packagePath });
@@ -263,5 +288,7 @@ const main = async (targetServices: string[] = []) => {
 };
 
 void main([
-  "@seccl/custody-workflow-manager"
-]);
+], {
+  mongodb: "^6.13.0",
+  "serverless-plugin-datadog": "latest"
+});

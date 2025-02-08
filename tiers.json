@@ -1,14 +1,10 @@
 [
   {
     "@seccl/mongo-connections": [],
-    "@seccl/serverless-utils": [],
     "@seccl/test-utils": []
   },
   {
     "@seccl/id-generator": [
-      "@seccl/mongo-connections"
-    ],
-    "@seccl/cucumber-test": [
       "@seccl/mongo-connections"
     ],
     "@seccl/queue": [
@@ -119,12 +115,10 @@
       "@seccl/aws-utils"
     ],
     "@seccl/backend-api": [
-      "@seccl/aws-utils",
-      "@seccl/serverless-utils"
+      "@seccl/aws-utils"
     ],
     "@seccl/mongo-analyser": [
-      "@seccl/aws-utils",
-      "@seccl/serverless-utils"
+      "@seccl/aws-utils"
     ],
     "@seccl/identity-resource": [
       "@seccl/aws-utils"
@@ -132,12 +126,10 @@
     "@seccl/scheduler": [
       "@seccl/aws-utils",
       "@seccl/notifications",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/static-data": [
-      "@seccl/aws-utils",
-      "@seccl/serverless-utils"
+      "@seccl/aws-utils"
     ],
     "@seccl/calculation-engine": [
       "@seccl/product-data-resource",
@@ -161,8 +153,7 @@
       "@seccl/product-data-resource",
       "@seccl/notifications",
       "@seccl/event-resource",
-      "@seccl/firm-data-resource",
-      "@seccl/serverless-utils"
+      "@seccl/firm-data-resource"
     ],
     "@seccl/settlement-engine": [
       "@seccl/transaction-resource",
@@ -191,7 +182,6 @@
       "@seccl/calculation-engine",
       "@seccl/firm-data-resource",
       "@seccl/queue",
-      "@seccl/serverless-utils",
       "@seccl/test-utils"
     ],
     "@seccl/firm-data-manager": [
@@ -209,8 +199,7 @@
     "@seccl/pdf-processor": [
       "@seccl/notifications",
       "@seccl/firm-data-resource",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ]
   },
   {
@@ -305,8 +294,7 @@
       "@seccl/rest-api",
       "@seccl/notifications",
       "@seccl/firm-data-resource",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ]
   },
   {
@@ -315,8 +303,7 @@
       "@seccl/batch-manager",
       "@seccl/aws-utils",
       "@seccl/product-data-resource",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/report-manager": [
       "@seccl/database-connection",
@@ -331,8 +318,7 @@
       "@seccl/firm-data-resource",
       "@seccl/market-data-resource",
       "@seccl/assets-resource",
-      "@seccl/id-generator",
-      "@seccl/serverless-utils"
+      "@seccl/id-generator"
     ],
     "@seccl/interface-manager": [
       "@seccl/investment-resource",
@@ -362,7 +348,6 @@
       "@seccl/firm-data-resource",
       "@seccl/market-data-resource",
       "@seccl/queue",
-      "@seccl/serverless-utils",
       "@seccl/test-utils"
     ],
     "@seccl/assets-manager": [
@@ -375,8 +360,7 @@
       "@seccl/firm-data-resource",
       "@seccl/market-data-resource",
       "@seccl/assets-resource",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/event-workflow-manager": [
       "@seccl/transaction-resource",
@@ -395,7 +379,6 @@
       "@seccl/communications-data-resource",
       "@seccl/assets-resource",
       "@seccl/queue",
-      "@seccl/serverless-utils",
       "@seccl/test-utils"
     ],
     "@seccl/custody-workflow-manager": [
@@ -439,7 +422,6 @@
       "@seccl/application-data",
       "@seccl/firm-data-resource",
       "@seccl/queue",
-      "@seccl/serverless-utils",
       "@seccl/test-utils"
     ],
     "@seccl/party-data-manager": [
@@ -464,7 +446,6 @@
       "@seccl/market-data-resource",
       "@seccl/assets-resource",
       "@seccl/queue",
-      "@seccl/serverless-utils",
       "@seccl/test-utils"
     ]
   },
@@ -474,8 +455,7 @@
       "@seccl/interface-manager",
       "@seccl/aws-utils",
       "@seccl/notifications",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/core-processor": [
       "@seccl/database-connection",
@@ -484,15 +464,13 @@
       "@seccl/event-workflow-manager",
       "@seccl/aws-utils",
       "@seccl/notifications",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/fix-outbound-processor": [
       "@seccl/database-connection",
       "@seccl/interface-manager",
       "@seccl/notifications",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/pfolio-api": [
       "@seccl/data-analysis-manager",
@@ -504,8 +482,7 @@
       "@seccl/feature-flag-utils",
       "@seccl/rest-api",
       "@seccl/notifications",
-      "@seccl/security",
-      "@seccl/serverless-utils"
+      "@seccl/security"
     ],
     "@seccl/core-api": [
       "@seccl/data-analysis-manager",
@@ -523,14 +500,12 @@
     "@seccl/interface-inbound-processor": [
       "@seccl/interface-manager",
       "@seccl/aws-utils",
-      "@seccl/notifications",
-      "@seccl/serverless-utils"
+      "@seccl/notifications"
     ],
     "@seccl/interface-outbound-processor": [
       "@seccl/interface-manager",
       "@seccl/aws-utils",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/interface-api": [
       "@seccl/interface-manager",
@@ -538,8 +513,7 @@
       "@seccl/rest-api",
       "@seccl/notifications",
       "@seccl/firm-data-resource",
-      "@seccl/queue",
-      "@seccl/serverless-utils"
+      "@seccl/queue"
     ],
     "@seccl/pfolio-processor": [
       "@seccl/event-workflow-manager",

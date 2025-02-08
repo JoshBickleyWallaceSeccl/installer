@@ -12,10 +12,12 @@ export interface PackageJson {
   workspaces?: string[];
 }
 
+type PackageType = 'workspace-root' | 'service' | 'library';
+
 export interface PackageInfo {
   packagePath: string;
   packageJson: PackageJson;
-  isService: boolean;
+  packageType: PackageType;
   localTarball?: string;
   workspaceRootPackage?: string;
   workspacePackages?: string[];
@@ -42,7 +44,7 @@ const getLocalPackageInfo = (
   return {
     packagePath,
     packageJson,
-    isService
+    packageType: isService ? 'service' : 'library'
   };
 }
 
@@ -55,15 +57,19 @@ const resolvePackage = (
 ): void => {
   const resolvedPath = path.join(rootDirectory, packageJsonPath);
   const packageInfo = getLocalPackageInfo(knownPackages, { absolutePackageJsonPath: resolvedPath });
-  packageInfo.workspacePackages = packageInfo.packageJson.workspaces?.map((workspacePackagePath) => {
-    const workspacePackageJsonPath = path.join(packageInfo.packagePath, workspacePackagePath, 'package.json');
-    const childPackageInfo = {
-      ...getLocalPackageInfo(knownPackages, { absolutePackageJsonPath: workspacePackageJsonPath }),
-      workspaceRootPackage: packageInfo.packageJson.name
-    };
-    knownPackages.set(childPackageInfo.packageJson.name, childPackageInfo);
-    return childPackageInfo.packageJson.name;
-  });
+
+  if (packageInfo.packageJson.workspaces) {
+    packageInfo.packageType = 'workspace-root';
+    packageInfo.workspacePackages = packageInfo.packageJson.workspaces?.map((workspacePackagePath) => {
+      const workspacePackageJsonPath = path.join(packageInfo.packagePath, workspacePackagePath, 'package.json');
+      const childPackageInfo = {
+        ...getLocalPackageInfo(knownPackages, { absolutePackageJsonPath: workspacePackageJsonPath }),
+        workspaceRootPackage: packageInfo.packageJson.name
+      };
+      knownPackages.set(childPackageInfo.packageJson.name, childPackageInfo);
+      return childPackageInfo.packageJson.name;
+    });
+  }
 
   knownPackages.set(packageInfo.packageJson.name, packageInfo);
 };

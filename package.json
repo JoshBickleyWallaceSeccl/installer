@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "install-packages": "tsx installer.ts"
+    "install-packages": "tsx install.ts"
   },
   "keywords": [],
   "author": "",
