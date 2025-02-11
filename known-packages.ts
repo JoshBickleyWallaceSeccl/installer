@@ -21,6 +21,8 @@ export interface PackageInfo {
   localTarball?: string;
   workspaceRootPackage?: string;
   workspacePackages?: string[];
+  defaultBranch: "main" | "master";
+  currentBranch: string;
 }
 
 const getIsService = (packagePath: string, packageJson: PackageJson): boolean => {
@@ -30,57 +32,97 @@ const getIsService = (packagePath: string, packageJson: PackageJson): boolean =>
 
 export type KnownPackages = Map<string, PackageInfo>;
 
-const getLocalPackageInfo = (
+const resolveDefaultBranch = async (packagePath: string): Promise<"main" | "master"> => {
+  const fileContent = await fs.promises.readFile(path.resolve(packagePath, '.git', 'config'), 'utf-8');
+  const match = fileContent.match(/\[branch "main"\]/);
+  return match ? 'main' : 'master';
+}
+
+const resolveCurrentBranch = async (packagePath: string): Promise<string> => {
+  const fileContent = await fs.promises.readFile(path.resolve(packagePath, '.git', 'HEAD'), 'utf-8');
+  const match = fileContent.trim().match(/^ref: refs\/heads\/(.*)/);
+
+  if (match) {
+    return match[1];
+  }
+
+  throw new Error('Could not resolve current branch');
+}
+
+const getLocalPackageInfo = async (
   knownPackages: KnownPackages,
-  { absolutePackageJsonPath }: { absolutePackageJsonPath: string; }
-): PackageInfo => {
-  const packageJson = JSON.parse(fs.readFileSync(absolutePackageJsonPath, 'utf-8')) as PackageJson;
+  {
+    absolutePackageJsonPath,
+    workspacePackagePath,
+    workspaceRootPackage
+  }: {
+    absolutePackageJsonPath: string;
+    workspacePackagePath?: string;
+    workspaceRootPackage?: string;
+  }
+): Promise<PackageInfo> => {
+  const packageJson = JSON.parse(await fs.promises.readFile(absolutePackageJsonPath, 'utf-8')) as PackageJson;
+
   if (knownPackages.has(packageJson.name)) {
+    const cachedPackage = knownPackages.get(packageJson.name)!;
+    cachedPackage.workspaceRootPackage = workspaceRootPackage;
+
     return knownPackages.get(packageJson.name)!;
   }
+
   const packagePath = path.dirname(absolutePackageJsonPath);
   const isService = getIsService(packagePath, packageJson);
+
+  const [defaultBranch, currentBranch] = await Promise.all([
+    resolveDefaultBranch(workspacePackagePath ?? packagePath),
+    resolveCurrentBranch(workspacePackagePath ?? packagePath)
+  ]);
 
   return {
     packagePath,
     packageJson,
-    packageType: isService ? 'service' : 'library'
+    packageType: isService ? 'service' : 'library',
+    defaultBranch,
+    currentBranch,
+    workspaceRootPackage
   };
 }
 
-const resolvePackage = (
+const resolvePackage = async (
   knownPackages: KnownPackages,
   { packageJsonPath, rootDirectory }: {
     packageJsonPath: string;
     rootDirectory: string;
   }
-): void => {
+): Promise<void> => {
   const resolvedPath = path.join(rootDirectory, packageJsonPath);
-  const packageInfo = getLocalPackageInfo(knownPackages, { absolutePackageJsonPath: resolvedPath });
+  const packageInfo = await getLocalPackageInfo(knownPackages, { absolutePackageJsonPath: resolvedPath });
 
   if (packageInfo.packageJson.workspaces) {
     packageInfo.packageType = 'workspace-root';
-    packageInfo.workspacePackages = packageInfo.packageJson.workspaces?.map((workspacePackagePath) => {
+    packageInfo.workspacePackages = [];
+    for (const workspacePackagePath of packageInfo.packageJson.workspaces ?? []) {
       const workspacePackageJsonPath = path.join(packageInfo.packagePath, workspacePackagePath, 'package.json');
-      const childPackageInfo = {
-        ...getLocalPackageInfo(knownPackages, { absolutePackageJsonPath: workspacePackageJsonPath }),
-        workspaceRootPackage: packageInfo.packageJson.name
-      };
+      const childPackageInfo = await getLocalPackageInfo(
+        knownPackages,
+        {
+          absolutePackageJsonPath: workspacePackageJsonPath,
+          workspacePackagePath: packageInfo.packagePath,
+          workspaceRootPackage: packageInfo.packageJson.name
+        }
+      )
       knownPackages.set(childPackageInfo.packageJson.name, childPackageInfo);
-      return childPackageInfo.packageJson.name;
-    });
-  }
-
+      packageInfo.workspacePackages.push(childPackageInfo.packageJson.name);
+    }
+  };
   knownPackages.set(packageInfo.packageJson.name, packageInfo);
-};
+}
 
 export const resolveKnownPackages = async (rootDirectory: string): Promise<KnownPackages> => {
   const entries = await fg.glob(['**/package.json'], { cwd: rootDirectory, ignore: ['**/node_modules/**'] });
-  return entries.reduce<KnownPackages>(
-    (acc, packageJsonPath) => {
-      resolvePackage(acc, { packageJsonPath, rootDirectory });
-      return acc;
-    },
-    new Map()
-  );
+  const acc = new Map();
+  for (const packageJsonPath of entries) {
+    await resolvePackage(acc, { packageJsonPath, rootDirectory });
+  }
+  return acc;
 };

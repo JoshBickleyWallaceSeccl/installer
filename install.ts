@@ -4,40 +4,11 @@ import fs from "node:fs";
 import { Listr } from 'listr2'
 import { KnownPackages, PackageInfo, resolveKnownPackages } from "./known-packages";
 import { exists, execAsync, isRetrying, Tier } from "./utils";
+import { SuccessCache } from "./sucessful-packages";
 
-type Step = "Workspace Install" | "Install" | "Install Dev" | "Build" | "Deploy" | "Pack";
+type Step = "Workspace Install" | "Install" | "Install Dev" | "Build" | "Deploy" | "Pack" | "Clean" | "Rebase" | "Push";
 
-const readSuccessfulPackages = async (): Promise<{ [pkg: string]: Set<Step>; }> => {
-  try {
-    const packagesString = await fs.promises.readFile('successful-packages.json', 'utf-8');
-    const packages = JSON.parse(packagesString);
-
-    return Object.entries(packages).reduce<{ [pkg: string]: Set<Step>; }>(
-      (acc, [pkg, steps]) => {
-        acc[pkg] = new Set(steps as Step[]);
-        return acc;
-      },
-      {}
-    );
-  } catch {
-    return {};
-  }
-};
-
-const writeSuccessfulPackages = (successfulPackages: { [pkg: string]: Set<Step>; }): Promise<void> => {
-  return fs.promises.writeFile('successful-packages.json', JSON.stringify(
-    Object.entries(successfulPackages).reduce<{ [pkg: string]: Step[] }>(
-      (acc, [pkg, steps]) => {
-        acc[pkg] = Array.from(steps);
-        return acc;
-      },
-      {}
-    ),
-    null,
-    2
-  ));
-};
-
+const success = new SuccessCache<Step>('./successful-packages.json');
 interface Context {
   packages: KnownPackages;
   tiers: { [pkg: string]: string[] }[];
@@ -57,23 +28,6 @@ const getLocalTarballs = (dependencies: string[], packages: KnownPackages): stri
     }
     return dependencyInfo.localTarball;
   });
-};
-
-const recordSuccessfulPackage = async (
-  successfulPackages: { [pkg: string]: Set<Step>; },
-  pkg: string,
-  step: Step
-): Promise<void> => {
-  if (!successfulPackages[pkg]) {
-    successfulPackages[pkg] = new Set();
-  }
-  successfulPackages[pkg].add(step);
-  await writeSuccessfulPackages(successfulPackages);
-}
-
-const resetPackageSuccess = async (successfulPackages: { [pkg: string]: Set<Step>; }, pkg: string): Promise<void> => {
-  delete successfulPackages[pkg];
-  await writeSuccessfulPackages(successfulPackages);
 };
 
 const resolveServerlessPath = (packages: KnownPackages, packageInfo: PackageInfo): string => {
@@ -98,22 +52,22 @@ const resolveTargetTiers = (targetServices: string[], tiers: Tier[]): Tier[] => 
     return tiers;
   }
 
-  const { targetTeirs: result } = [...tiers].reverse().reduce<{ targetTeirs: Tier[]; nextPackages: Set<string>; }>(
-    ({ targetTeirs: effectiveTiers, nextPackages }, tier) => {
+  const { targetTiers: result } = [...tiers].reverse().reduce<{ targetTiers: Tier[]; nextPackages: Set<string>; }>(
+    ({ targetTiers: targetTiers, nextPackages }, tier) => {
       const newTier = Object.entries(tier).filter(([pkg]) => nextPackages.has(pkg));
       if (newTier.length === 0) {
-        return { targetTeirs: effectiveTiers, nextPackages };
+        return { targetTiers, nextPackages };
       }
       newTier.forEach(([pkg, dependencies]) => {
         nextPackages.delete(pkg);
         dependencies.forEach((dependency) => nextPackages.add(dependency));
       });
-      effectiveTiers.unshift(Object.fromEntries(newTier));
+      targetTiers.unshift(Object.fromEntries(newTier));
 
-      return { targetTeirs: effectiveTiers, nextPackages };
+      return { targetTiers, nextPackages };
     },
     {
-      targetTeirs: [],
+      targetTiers: [],
       nextPackages: new Set(targetServices)
     }
   );
@@ -121,14 +75,11 @@ const resolveTargetTiers = (targetServices: string[], tiers: Tier[]): Tier[] => 
   return result;
 };
 
-
-
 const main = async (
   targetServices: string[] = [],
   externalPackageTargetVersions: { [pkg: string]: string } = {}
 ) => {
   const rootDirectory = path.resolve(__dirname, '..');
-  const successfulPackages = await readSuccessfulPackages();
 
   const tasks = new Listr<Context>(
     [
@@ -147,135 +98,175 @@ const main = async (
       },
       {
         title: 'Deploy Stack',
-        task: ({ tiers }, task): Listr<Context> => {
+        task: ({ tiers, packages }, task): Listr<Context> => {
           return task.newListr(tiers.map((tier, index) => ({
             title: `Tier ${index + 1}`,
             task: (ctx, task) => {
-              return task.newListr<Context>(Object.entries(tier).map(([pkg, dependencies]) => ({
-                title: `${pkg}`,
-                retry: 1,
-                task: ({ packages }, task): Listr<Context> => {
-                  const packageInfo = packages.get(pkg);
-                  if (!packageInfo) {
-                    throw Error(`Package ${pkg} not found`);
-                  }
 
-                  const localTarballs = getLocalTarballs(dependencies, packages);
-                  return task.newListr<Context>([
-                    // {
-                    //   title: "Rebase",
-                    //   task: async () => {
-                    //     await execAsync(`git fetch && git reset --hard HEAD && git pull --rebase`, { cwd: packageInfo.packagePath });
-                    //     await resetPackageSuccess(successfulPackages, pkg);
-                    //   }
-                    // },
-                    {
-                      title: `Clean`,
-                      enabled: () => {
-                        return !successfulPackages[pkg] || isRetrying(task);
-                      },
-                      task: async () => {
-                        await execAsync(`git reset --hard HEAD && git clean -fdX && rm -f *.tsbuildinfo`, { cwd: packageInfo.packagePath })
-                        await resetPackageSuccess(successfulPackages, pkg);
-                      }
-                    },
-                    {
-                      title: "Install Workspace Packages",
-                      enabled: () => !!packageInfo.workspaceRootPackage,
-                      retry: 1,
-                      task: async (ctx, task) => {
-                        if (successfulPackages[pkg]?.has('Workspace Install')) return;
+              return task.newListr<Context>(Object.entries(tier).map(([pkg, dependencies]) => {
+                const packageInfo = packages.get(pkg);
 
-                        const command = isRetrying(task) ? "clean-install" : "install";
-                        const workingDir = packages.get(packageInfo.workspaceRootPackage!)?.packagePath;
-
-                        await execAsync(`npm ${command}`, { cwd: workingDir });
-
-                        await recordSuccessfulPackage(successfulPackages, pkg, 'Workspace Install');
-                      },
-                    },
-                    {
-                      title: `Install dependencies`,
-                      retry: 1,
-                      task: async (ctx, task) => {
-                        if (successfulPackages[pkg]?.has('Install')) return;
-                        if (isRetrying(task)) {
-                          await execAsync(`git clean -fdX && npm clean-install`, { cwd: packageInfo.packagePath })
-                        }
-
-                        const externalDependencies = Object.keys(packageInfo.packageJson.dependencies ?? {})
-                          .filter((dependency: string) => dependency in externalPackageTargetVersions)
-                          .map((dependency) => `${dependency}@${externalPackageTargetVersions[dependency]}`);
-
-                        const command = `npm install ${[...localTarballs, ...externalDependencies].map((dep) => `"${dep}"`).join(' ')}`;
-
-                        await execAsync(command, { cwd: packageInfo.packagePath });
-                        await recordSuccessfulPackage(successfulPackages, pkg, 'Install');
-                      },
-                    },
-                    {
-                      title: `Install dev dependencies`,
-                      retry: 1,
-                      task: async (ctx, task) => {
-                        if (successfulPackages[pkg]?.has('Install Dev')) return;
-
-                        const externalDependencies = Object.keys(packageInfo.packageJson.devDependencies ?? {})
-                          .filter((dependency: string) => dependency in externalPackageTargetVersions)
-                          .map((dependency) => `${dependency}@${externalPackageTargetVersions[dependency]}`);
-
-                        if (externalDependencies.length !== 0) {
-                          const command = `npm install -D ${externalDependencies.map((dep) => `"${dep}"`).join(' ')}`;
-                          await execAsync(command, { cwd: packageInfo.packagePath });
-                        }
-
-                        await recordSuccessfulPackage(successfulPackages, pkg, 'Install Dev');
-                      },
-                    },
-                    {
-                      title: `Build`,
-                      task: async () => {
-                        if (successfulPackages[pkg]?.has('Build')) return;
-
-                        const workingDirectory = packageInfo.workspaceRootPackage
-                          ? packages.get(packageInfo.workspaceRootPackage)?.packagePath
-                          : packageInfo.packagePath;
-
-                        await execAsync(`npm run build`, { cwd: workingDirectory });
-                        await recordSuccessfulPackage(successfulPackages, pkg, 'Build');
-                      }
-                    },
-                    {
-                      title: `Deploy`,
-                      enabled: () => packageInfo.packageType === 'service',
-                      retry: 1,
-                      task: async () => {
-                        if (successfulPackages[pkg]?.has('Deploy')) return;
-                        const serverlessPath = resolveServerlessPath(packages, packageInfo);
-                        await execAsync(`npm run deploy --ignore-scripts`, { cwd: serverlessPath });
-                        await recordSuccessfulPackage(successfulPackages, pkg, 'Deploy');
-                      },
-                    },
-                    {
-                      title: `Pack`,
-                      enabled: () => packageInfo.packageType === 'library',
-                      task: async () => {
-                        if (!successfulPackages[pkg]?.has('Pack')) {
-                          await execAsync(`npm pack`, { cwd: packageInfo.packagePath });
-                        };
-
-                        const [tarballPath] = await fg.glob(['*.tgz'], { cwd: packageInfo.packagePath });
-
-                        if (!tarballPath) {
-                          throw Error(`Tarball not found for ${pkg}`);
-                        }
-
-                        packageInfo.localTarball = path.join(packageInfo.packagePath, tarballPath);
-                        await recordSuccessfulPackage(successfulPackages, pkg, 'Pack');
-                      },
-                    }
-                  ], { concurrent: false, exitOnError: true });
+                if (!packageInfo) {
+                  throw Error(`Package ${pkg} not found`);
                 }
-              })), { concurrent: 4, exitOnError: true });
+                return {
+                  title: `${pkg} (${packageInfo.currentBranch})`,
+                  retry: 1,
+                  task: (ctx, task): Listr<Context> => {
+                    return task.newListr<Context>([
+                      {
+                        title: "Rebase",
+                        enabled: () => {
+                          return !success.hasSeen(pkg)
+                            && (!packageInfo.workspaceRootPackage || !success.hasSucceeded(
+                              packageInfo.workspaceRootPackage, "Rebase"
+                            ));
+                        },
+                        task: async () => {
+                          await execAsync(
+                            `git fetch && git reset --hard HEAD && git rebase origin/${packageInfo.defaultBranch}`,
+                            { cwd: packageInfo.packagePath }
+                          );
+                          await success.resetPackageSuccess(pkg);
+                          if (packageInfo.workspaceRootPackage) {
+                            await success.recordSuccess(packageInfo.workspaceRootPackage, 'Rebase');
+                          }
+                        }
+                      },
+                      {
+                        title: "Push",
+                        enabled: () => {
+                          return packageInfo.currentBranch !== packageInfo.defaultBranch;
+                        },
+                        task: async () => {
+                          if (success.hasSucceeded(pkg, "Push")) return;
+                          await execAsync(
+                            `git push --force-with-lease`,
+                            { cwd: packageInfo.packagePath }
+                          );
+                          await success.recordSuccess(pkg, 'Push');
+                        }
+                      },
+                      {
+                        title: `Clean`,
+                        enabled: () => {
+                          return !success.hasSeen(pkg) && (!packageInfo.workspaceRootPackage || !success.hasSucceeded(
+                            packageInfo.workspaceRootPackage, "Clean"
+                          ));
+                        },
+                        task: async () => {
+                          await execAsync(`git reset --hard HEAD && git clean -fdX && rm -f *.tsbuildinfo`, { cwd: packageInfo.packagePath })
+                          await success.resetPackageSuccess(pkg);
+                          if (packageInfo.workspaceRootPackage) {
+                            await success.recordSuccess(packageInfo.workspaceRootPackage, 'Clean');
+                          }
+                        }
+                      },
+                      {
+                        title: "Install Workspace Packages",
+                        enabled: () => !!packageInfo.workspaceRootPackage,
+                        retry: 1,
+                        task: async (ctx, task) => {
+                          if (success.hasSucceeded(pkg, "Workspace Install")) return;
+
+                          const command = isRetrying(task) ? "clean-install" : "install";
+                          const workingDir = packages.get(packageInfo.workspaceRootPackage!)?.packagePath;
+
+                          await execAsync(`npm ${command}`, { cwd: workingDir });
+
+                          await success.recordSuccess(pkg, 'Workspace Install');
+                        },
+                      },
+                      {
+                        title: `Install dependencies`,
+                        retry: 1,
+                        task: async (ctx, task) => {
+                          if (success.hasSucceeded(pkg, "Install")) return;
+                          if (isRetrying(task)) {
+                            await execAsync(`git clean -fdX && npm clean-install`, { cwd: packageInfo.packagePath })
+                          }
+
+                          const externalDependencies = Object.keys(packageInfo.packageJson.dependencies ?? {})
+                            .filter((dependency: string) => dependency in externalPackageTargetVersions)
+                            .map((dependency) => `${dependency}@${externalPackageTargetVersions[dependency]}`);
+
+                          const localTarballs = getLocalTarballs(dependencies, packages);
+
+                          const command = `npm install ${[...localTarballs, ...externalDependencies].map((dep) => `"${dep}"`).join(' ')}`;
+
+                          await execAsync(command, { cwd: packageInfo.packagePath });
+
+                          await success.recordSuccess(pkg, 'Install');
+                        },
+                      },
+                      {
+                        title: `Install dev dependencies`,
+                        retry: 1,
+                        task: async (ctx, task) => {
+                          if (success.hasSucceeded(pkg, "Install Dev")) return;
+
+                          const externalDependencies = Object.keys(packageInfo.packageJson.devDependencies ?? {})
+                            .filter((dependency: string) => dependency in externalPackageTargetVersions)
+                            .map((dependency) => `${dependency}@${externalPackageTargetVersions[dependency]}`);
+
+                          if ("@seccl/test-utils" in (packageInfo.packageJson.devDependencies ?? {})) {
+                            externalDependencies.push("@jest/globals");
+                          }
+
+                          if (externalDependencies.length !== 0) {
+                            const command = `npm install -D ${externalDependencies.map((dep) => `"${dep}"`).join(' ')}`;
+                            await execAsync(command, { cwd: packageInfo.packagePath });
+                          }
+
+                          await success.recordSuccess(pkg, 'Install Dev');
+                        },
+                      },
+                      {
+                        title: `Build`,
+                        task: async () => {
+                          if (success.hasSucceeded(pkg, "Build")) return;
+
+                          const workingDirectory = packageInfo.workspaceRootPackage
+                            ? packages.get(packageInfo.workspaceRootPackage)?.packagePath
+                            : packageInfo.packagePath;
+
+                          await execAsync(`npm run build`, { cwd: workingDirectory });
+                          await success.recordSuccess(pkg, 'Build');
+                        }
+                      },
+                      {
+                        title: `Deploy`,
+                        enabled: () => packageInfo.packageType === 'service',
+                        retry: 1,
+                        task: async () => {
+                          if (success.hasSucceeded(pkg, "Deploy")) return;
+                          const serverlessPath = resolveServerlessPath(packages, packageInfo);
+                          await execAsync(`npm run deploy --ignore-scripts`, { cwd: serverlessPath });
+                          await success.recordSuccess(pkg, 'Deploy');
+                        },
+                      },
+                      {
+                        title: `Pack`,
+                        enabled: () => packageInfo.packageType === 'library',
+                        task: async () => {
+                          if (!success.hasSucceeded(pkg, "Pack")) {
+                            await execAsync(`npm pack`, { cwd: packageInfo.packagePath });
+                          };
+
+                          const [tarballPath] = await fg.glob(['*.tgz'], { cwd: packageInfo.packagePath });
+
+                          if (!tarballPath) {
+                            throw Error(`Tarball not found for ${pkg}`);
+                          }
+
+                          packageInfo.localTarball = path.join(packageInfo.packagePath, tarballPath);
+                          await success.recordSuccess(pkg, 'Pack');
+                        },
+                      }
+                    ], { concurrent: false, exitOnError: true });
+                  }
+                }
+              }), { concurrent: 4, exitOnError: true });
             }
           })));
         }
