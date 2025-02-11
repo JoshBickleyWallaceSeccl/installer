@@ -35,6 +35,7 @@ export type KnownPackages = Map<string, PackageInfo>;
 const resolveDefaultBranch = async (packagePath: string): Promise<"main" | "master"> => {
   const fileContent = await fs.promises.readFile(path.resolve(packagePath, '.git', 'config'), 'utf-8');
   const match = fileContent.match(/\[branch "main"\]/);
+
   return match ? 'main' : 'master';
 }
 
@@ -65,7 +66,10 @@ const getLocalPackageInfo = async (
 
   if (knownPackages.has(packageJson.name)) {
     const cachedPackage = knownPackages.get(packageJson.name)!;
-    cachedPackage.workspaceRootPackage = workspaceRootPackage;
+
+    if (workspaceRootPackage) {
+      cachedPackage.workspaceRootPackage = workspaceRootPackage;
+    }
 
     return knownPackages.get(packageJson.name)!;
   }

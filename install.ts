@@ -44,7 +44,7 @@ const resolveServerlessPath = (packages: KnownPackages, packageInfo: PackageInfo
     }
   }
 
-  throw new Error("Unable to resolve serverless path");
+  throw new Error(`Unable to resolve serverless path for ${packageInfo.packageJson.name}`);
 };
 
 const resolveTargetTiers = (targetServices: string[], tiers: Tier[]): Tier[] => {
